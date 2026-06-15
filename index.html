@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BC Camping Areas</title>
+<style>
+  :root {
+    --bg: #faf8f3;
+    --surface: #ffffff;
+    --border: #e2dfd6;
+    --text: #2a2a28;
+    --muted: #6b6a64;
+    --accent: #3d6b3a;
+    --accent-light: #e8f0e6;
+    --hover: #f4f1e8;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--accent);
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    align-items: center;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 240px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .search-box::before {
+    content: "🔍";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.5;
+    font-size: 0.9rem;
+  }
+  .filter-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .filter-group select {
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    font-size: 0.9rem;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .filter-group select:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .stats {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 12px;
+  }
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  thead {
+    background: #f5f2e9;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  th {
+    text-align: left;
+    padding: 12px 14px;
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  th:hover { background: var(--hover); color: var(--text); }
+  th .sort-indicator {
+    display: inline-block;
+    margin-left: 4px;
+    opacity: 0.3;
+    font-size: 0.7rem;
+  }
+  th.sorted-asc .sort-indicator,
+  th.sorted-desc .sort-indicator {
+    opacity: 1;
+    color: var(--accent);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--hover); }
+  td {
+    padding: 12px 14px;
+    vertical-align: top;
+  }
+  td.park-name {
+    font-weight: 600;
+    color: var(--text);
+    min-width: 180px;
+  }
+  td.drive-time {
+    white-space: nowrap;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+  td.notes {
+    color: var(--muted);
+    font-size: 0.88rem;
+    max-width: 420px;
+  }
+  td.fee { max-width: 220px; }
+  td.fee .badge { white-space: normal; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    background: var(--accent-light);
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .badge.free { background: #e8f0e6; color: #2d5a2a; }
+  .badge.paid { background: #fdf4e3; color: #8a6422; }
+  .badge.reservation { background: #fde8e8; color: #8a2a2a; }
+  .badge.fcfs { background: #e3edf7; color: #2a4f7a; }
+  .badge.none { background: #ececec; color: #5a5a5a; }
+  .empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+  }
+  mark {
+    background: #fff3a3;
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .mobile-sort { display: none; }
+
+  @media (max-width: 720px) {
+    body { padding: 12px; font-size: 15px; }
+    h1 { font-size: 1.4rem; }
+    .subtitle { font-size: 0.85rem; margin-bottom: 16px; }
+
+    .controls { flex-direction: column; align-items: stretch; gap: 10px; }
+    .search-box { min-width: 0; width: 100%; }
+    .search-box input { font-size: 16px; padding: 12px 14px 12px 38px; }
+    .filter-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .filter-group select { width: 100%; padding: 11px 12px; font-size: 16px; }
+
+    .mobile-sort { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mobile-sort select {
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .table-wrap {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+    table, thead, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+
+    tbody tr {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow);
+      transition: none;
+    }
+    tbody tr:hover { background: var(--surface); }
+
+    td {
+      padding: 0;
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 10px;
+      align-items: start;
+      margin: 0;
+      border: none;
+    }
+    td + td { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    td::before {
+      content: attr(data-label);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      font-weight: 600;
+      padding-top: 2px;
+    }
+
+    td.park-name {
+      grid-template-columns: 1fr;
+      gap: 0;
+      min-width: 0;
+      font-size: 1.05rem;
+    }
+    td.park-name::before { display: none; }
+    td.park-name + td { margin-top: 10px; padding-top: 10px; }
+
+    td.notes { max-width: none; }
+    td.fee { max-width: none; }
+    td.fee .badge, td.drive-time { white-space: normal; }
+
+    .empty {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 32px 16px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>BC Camping Areas</h1>
+  <div class="subtitle">Interactive directory of camping destinations near Vancouver</div>
+
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Search parks, terrain, notes...">
+    </div>
+    <div class="filter-group">
+      <select id="filter-drive">
+        <option value="">All drive times</option>
+      </select>
+      <select id="filter-permits">
+        <option value="">All permits</option>
+      </select>
+      <select id="filter-fee">
+        <option value="">All fees</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mobile-sort">
+    <select id="mobile-sort-col" aria-label="Sort by"></select>
+    <select id="mobile-sort-dir" aria-label="Sort direction">
+      <option value="asc">Ascending</option>
+      <option value="desc">Descending</option>
+    </select>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr id="thead-row"></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const DATA = [
+  {
+    "Park / Area": "Mount Seymour",
+    "Drive time": "~30 min",
+    "Managing Body": "BC Parks",
+    "Permits": "None (backcountry)",
+    "Fee": "Free",
+    "Terrain": "Forest / subalpine",
+    "Notes": "Elsay Lake is the main backcountry destination — remote feel very close to the city. Group campsite also available (reservation required). No dogs in backcountry. Winter day pass required for upper lots."
+  },
+  {
+    "Park / Area": "Say Nuth Khaw Yum (Indian Arm)",
+    "Drive time": "~30 min + paddle",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Coastal fjord / marine",
+    "Notes": "Boat-access only. 3 free marine campsites (Twin Islands, Berg's Landing, Granite Falls). 18 km paddle from Deep Cove to far end. No campfires. No potable water. Busy on summer weekends."
+  },
+  {
+    "Park / Area": "Pinecone Burke",
+    "Drive time": "~45 min",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Forest / lakes",
+    "Notes": "FCFS tent pads. No campfires. Widgeon Valley/Creek side is boat-access only — canoe or kayak from Grant Narrows, Pitt Lake."
+  },
+  {
+    "Park / Area": "Howe Sound Crest Trail (Cypress)",
+    "Drive time": "~45 min",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine ridge / lakes",
+    "Notes": "29 km point-to-point — car shuttle required. Serious route with scrambling and exposed ridgelines. Wilderness camping at Magnesia Meadows, Brunswick Lake, and Deeks Lake — no tent pads or booking system. No campfires."
+  },
+  {
+    "Park / Area": "Stawamus Chief",
+    "Drive time": "~1 hr",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "~$35/party/night (frontcountry)",
+    "Terrain": "Granite / forest",
+    "Notes": "Frontcountry campground at the base of one of the world's largest granite monoliths. World-class rock climbing. Good base for multi-day climbing trips."
+  },
+  {
+    "Park / Area": "Golden Ears",
+    "Drive time": "~1 hr",
+    "Managing Body": "BC Parks",
+    "Permits": "Advance reservation ",
+    "Fee": "$5-$25/person/night (backcountry); up to $51/party/night (frontcountry peak season)",
+    "Terrain": "Forest / river",
+    "Notes": "Summer day pass required. Non-BC residents pay an additional $20/visit surcharge."
+  },
+  {
+    "Park / Area": "High Falls Creek Rec Site",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Forest / river",
+    "Notes": "Free roadside rec site on the Squamish River FSR. No facilities — no toilets, no designated spots. Riverside camping in the Squamish Valley. History of bear sightings; food hanging essential. 4WD recommended."
+  },
+  {
+    "Park / Area": "Squamish Riverside Rec Site",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Forest / river",
+    "Notes": "Free riverside rec site just off the Ashlu FSR bridge, Squamish Valley. ~10 spots, no facilities. Popular fishing spot. Rough and uneven access — low clearance vehicles not recommended."
+  },
+  {
+    "Park / Area": "Cal-Cheak Recreation Site",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "$15/site/night",
+    "Terrain": "Forest / rivers",
+    "Notes": "55+ drive-in FCFS sites between Cheakamus River and Callaghan Creek. No reservation system. Self-register and pay on site. Closed Nov 1 - Apr 1. Good base for Whistler-area hiking and the Sea to Sky Trail."
+  },
+  {
+    "Park / Area": "Garibaldi",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "Advance reservation ",
+    "Fee": "$25/person/night",
+    "Terrain": "Alpine lakes / glaciers",
+    "Notes": "Reservation required for all overnight stays year-round — no standby spaces. Day pass not required with a backcountry reservation. Non-BC residents pay an additional $20/visit surcharge."
+  },
+  {
+    "Park / Area": "Callaghan Lake",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "FCFS permit",
+    "Fee": "$5/person/night",
+    "Terrain": "Subalpine lake",
+    "Notes": "Small drive-in campground at the lake. No advance reservations. Good winter Nordic / ski touring base. Motorised use prohibited Nov 1 - May 15."
+  },
+  {
+    "Park / Area": "Watersprite Lake",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "BCMC / Rec Sites",
+    "Permits": "Advance reservation ",
+    "Fee": "$25/tent platform/night",
+    "Terrain": "Alpine lake",
+    "Notes": "Managed by BC Mountaineering Club — book via recsites.bcmc.ca up to 60 days in advance. No dogs."
+  },
+  {
+    "Park / Area": "Brandywine Meadows",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "Crown land / BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Subalpine meadows",
+    "Notes": "Wilderness camping — no tent pads, no facilities, no booking. Camp carefully to avoid damaging vegetation. Accessible from lower trailhead (longer) or upper FSR trailhead (shorter)."
+  },
+  {
+    "Park / Area": "Brew Lake",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "Crown land",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Subalpine lake",
+    "Notes": "Free wilderness camping at an alpine lake near Whistler. 8.5 km, 900m gain from road. No facilities — hang food, dig catholes. 4WD reduces distance via Brew Creek FSR. Low traffic."
+  },
+  {
+    "Park / Area": "Tricouni Meadows",
+    "Drive time": "~2 hrs",
+    "Managing Body": "Crown land",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine meadows / lakes",
+    "Notes": "Free wilderness camping at Spearhead Lake in alpine meadows NW of Squamish. Access via Squamish River FSR / Branch 200 — significant washout reported since 2022, may add 3+ km to approach. No facilities."
+  },
+  {
+    "Park / Area": "Blanca Lake",
+    "Drive time": "~2 hrs",
+    "Managing Body": "Crown land",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine lake / glacier",
+    "Notes": "Free wilderness camping NW of Squamish. 4.5 km, 500m gain from Elaho Mainline trailhead. Stunning lake and glacier views. Long FSR drive deters crowds. No facilities — hang food, dig catholes."
+  },
+  {
+    "Park / Area": "Jones Lake (Wahleach)",
+    "Drive time": "~1.5 hrs",
+    "Managing Body": "BC Hydro",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Reservoir / forest",
+    "Notes": "55 free FCFS campsites at a BC Hydro reservoir east of Chilliwack. Pit toilets, picnic tables, fire rings. No potable water. Steep rough FSR access — 4WD recommended. No alcohol permitted (BC Hydro policy). 14-night seasonal limit."
+  },
+  {
+    "Park / Area": "Coquihalla Summit Recreation Area",
+    "Drive time": "~2 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Subalpine",
+    "Notes": "FCFS tent pads at Falls Lake. No campfires. Illal Meadows also accessible from here — vast free alpine camping area with no permit required."
+  },
+  {
+    "Park / Area": "Chilliwack Lake (Sxotsaqel)",
+    "Drive time": "~2 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "FCFS permit",
+    "Fee": "$5/person/night",
+    "Terrain": "Alpine lakes",
+    "Notes": "No reservations. Lindeman Lake Trail partially closed as of March 2026 — verify current status before visiting."
+  },
+  {
+    "Park / Area": "Tikwalus Heritage Trail",
+    "Drive time": "~2 hrs",
+    "Managing Body": "Hope Mountain Centre",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Forest / canyon bluffs",
+    "Notes": "Short steep loop (12.5 km, 930m gain) north of Hope. Free campsite with outhouse, bear cache, and fire pit. Rich Nlaka'pamux history. Low visitor numbers. No water at campsite — fill up on the way."
+  },
+  {
+    "Park / Area": "HBC Heritage Trail",
+    "Drive time": "~2 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Forest / subalpine meadows",
+    "Notes": "75 km point-to-point Hope to Tulameen, typically 5-8 days. Very low visitor numbers. Manson's Campsite accessible without 4WD; Conglomerate Flats end requires 4WD to reach trailhead."
+  },
+  {
+    "Park / Area": "Semaphore Lakes",
+    "Drive time": "~2.5 hrs",
+    "Managing Body": "Rec Sites & Trails BC",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine lakes",
+    "Notes": "Three alpine lakes near Pemberton via Hurley FSR. Official rec area with outhouses and food caches at each lake. All camping FCFS, no fee. Most vehicles (AWD preferred) can reach trailhead. Ecologically sensitive — use designated areas."
+  },
+  {
+    "Park / Area": "Tenquille Lake (Hawint)",
+    "Drive time": "~2.5 hrs",
+    "Managing Body": "RSTBC / Lil'wat Nation / PWA",
+    "Permits": "Advance reservation ",
+    "Fee": "$25/person/night (cabin); $25/site/night (tent, up to 6 people)",
+    "Terrain": "Subalpine lake / meadows",
+    "Notes": "Community-managed by Pemberton Wildlife Association — book via pembertonwildlifeassociation.com up to 60 days in advance. High-clearance or 4WD required for trailhead. No dogs. No campfires. Grizzly bear country."
+  },
+  {
+    "Park / Area": "Joffre Lakes",
+    "Drive time": "~2.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "Advance reservation ",
+    "Fee": "$17-$25/person/night",
+    "Terrain": "Alpine lakes",
+    "Notes": "Day pass required for all visitors regardless of transport mode. Non-BC residents pay an additional $20/visit surcharge. Not suitable for walk-up trips."
+  },
+  {
+    "Park / Area": "Skagit Valley",
+    "Drive time": "~2.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "FCFS permit",
+    "Fee": "$5/person/night",
+    "Terrain": "River valley",
+    "Notes": "No reservation system. Good shoulder-season choice."
+  },
+  {
+    "Park / Area": "Sechelt Inlets Marine Park",
+    "Drive time": "~1.5 hrs + 1 ferry + paddle",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Coastal fjord / marine",
+    "Notes": "9 free boat-access campsites along Sechelt, Salmon and Narrows Inlets. Launch from Porpoise Bay Provincial Park. Calm paddling conditions. Good wildlife viewing. No potable water at most sites."
+  },
+  {
+    "Park / Area": "Nahatlatch Provincial Park",
+    "Drive time": "~2.5 hrs",
+    "Managing Body": "BC Parks (community-managed)",
+    "Permits": "None",
+    "Fee": "$5/person/night",
+    "Terrain": "River valley / lakes",
+    "Notes": "Three jade-green lakes north of Boston Bar. Active logging road access — busy Mon-Fri. Good paddling and riverside camping. Rustic facilities."
+  },
+  {
+    "Park / Area": "E.C. Manning",
+    "Drive time": "~3 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "Mixed",
+    "Fee": "$5/person/night",
+    "Terrain": "Alpine / forest",
+    "Notes": "Some campgrounds require reservations, others are FCFS with permits — check individual sites before planning."
+  },
+  {
+    "Park / Area": "Stein Valley Nlaka'pamux",
+    "Drive time": "~3 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Valley / alpine",
+    "Notes": "Upper alpine sections require route-finding. Not a true loop. Largest unlogged watershed in southwest BC."
+  },
+  {
+    "Park / Area": "Sunshine Coast Trail",
+    "Drive time": "~3 hrs + 2 ferries",
+    "Managing Body": "Powell River Regional District",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Coastal / forest / ridges",
+    "Notes": "180 km with 14 free huts. Requires two ferries — costs typically exceed $160 return, verify current BC Ferries rates before planning."
+  },
+  {
+    "Park / Area": "Nairn Falls",
+    "Drive time": "~3 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "Advance reservation ",
+    "Fee": "~$35/party/night (frontcountry)",
+    "Terrain": "River / forest",
+    "Notes": "Frontcountry park near Pemberton. Walk to impressive 60m falls on the Green River. Popular summer base camp. Reservations required in summer."
+  },
+  {
+    "Park / Area": "South Chilcotin Mountains (Gold Bridge area)",
+    "Drive time": "~3.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine / remote",
+    "Notes": "Vast remote alpine park via Hurley FSR from Pemberton. Very low visitor numbers. No infrastructure in most areas — true wilderness. 4WD or high-clearance recommended for most access roads."
+  },
+  {
+    "Park / Area": "Okanagan Mountain",
+    "Drive time": "~4 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Dry / rocky",
+    "Notes": "Best visited spring or September — summer heat can be extreme. Distinctly different from coastal BC terrain."
+  },
+  {
+    "Park / Area": "Cathedral",
+    "Drive time": "~4.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "Advance reservation ",
+    "Fee": "$10/person/night",
+    "Terrain": "Alpine lakes",
+    "Notes": "Access via steep hike or expensive private lodge shuttle — no other road access."
+  },
+  {
+    "Park / Area": "Monashee",
+    "Drive time": "~4.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "FCFS permit",
+    "Fee": "$5/person/night",
+    "Terrain": "Alpine lakes",
+    "Notes": "No reservations. No dogs. Rough FSR access road."
+  },
+  {
+    "Park / Area": "Wells Gray",
+    "Drive time": "~4.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Volcanic plateau / waterfalls",
+    "Notes": "Very large park with relatively few visitors."
+  },
+  {
+    "Park / Area": "Tweedsmuir South (Chilko Lake area)",
+    "Drive time": "~5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Plateau / alpine / lakes",
+    "Notes": "One of BC's largest parks. Remote and demanding access. Chilko Lake is the main draw. Very few visitors. No facilities in backcountry."
+  },
+  {
+    "Park / Area": "Valhalla",
+    "Drive time": "~7.5 hrs",
+    "Managing Body": "BC Parks",
+    "Permits": "None",
+    "Fee": "Free",
+    "Terrain": "Alpine lakes",
+    "Notes": "Included for reference only — beyond the 5-hour range. Completely free, no permits."
+  }
+];
+
+const COLUMNS = ["Park / Area", "Drive time", "Managing Body", "Permits", "Fee", "Terrain", "Notes"];
+
+// Parse drive time into minutes (lowest end of range, ignoring ferries/paddle add-ons)
+function parseDriveTime(str) {
+  const m = str.match(/([\d.]+)\s*(min|hr)/);
+  if (!m) return Infinity;
+  const n = parseFloat(m[1]);
+  return m[2] === "hr" ? n * 60 : n;
+}
+
+const state = {
+  sortCol: "Drive time",
+  sortDir: "asc",
+  search: "",
+  drive: "",
+  permits: "",
+  fee: "",
+};
+
+function permitBadgeClass(p) {
+  const v = p.trim().toLowerCase();
+  if (v.startsWith("none")) return "none";
+  if (v.includes("fcfs")) return "fcfs";
+  if (v.includes("advance") || v.includes("reservation")) return "reservation";
+  return "badge";
+}
+function feeBadgeClass(f) {
+  return f.trim().toLowerCase() === "free" ? "free" : "paid";
+}
+
+function escapeHTML(s) {
+  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function highlight(text, query) {
+  const escaped = escapeHTML(text);
+  if (!query) return escaped;
+  const q = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return escaped.replace(new RegExp(`(${q})`, "gi"), "<mark>$1</mark>");
+}
+
+function populateFilters() {
+  const driveSel = document.getElementById("filter-drive");
+  const permitSel = document.getElementById("filter-permits");
+  const feeSel = document.getElementById("filter-fee");
+
+  const drives = [...new Set(DATA.map(r => r["Drive time"]))]
+    .sort((a, b) => parseDriveTime(a) - parseDriveTime(b));
+  const permits = [...new Set(DATA.map(r => r["Permits"].trim()))].sort();
+  const fees = ["Free", "Paid"];
+
+  drives.forEach(d => {
+    const o = document.createElement("option");
+    o.value = d; o.textContent = d;
+    driveSel.appendChild(o);
+  });
+  permits.forEach(p => {
+    const o = document.createElement("option");
+    o.value = p; o.textContent = p || "(none)";
+    permitSel.appendChild(o);
+  });
+  fees.forEach(f => {
+    const o = document.createElement("option");
+    o.value = f; o.textContent = f;
+    feeSel.appendChild(o);
+  });
+}
+
+function renderHeader() {
+  const tr = document.getElementById("thead-row");
+  tr.innerHTML = "";
+  COLUMNS.forEach(col => {
+    const th = document.createElement("th");
+    th.textContent = col;
+    const ind = document.createElement("span");
+    ind.className = "sort-indicator";
+    ind.textContent = "▲▼";
+    th.appendChild(ind);
+    if (state.sortCol === col) {
+      th.classList.add(state.sortDir === "asc" ? "sorted-asc" : "sorted-desc");
+      ind.textContent = state.sortDir === "asc" ? "▲" : "▼";
+    }
+    th.onclick = () => {
+      if (state.sortCol === col) {
+        state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+      } else {
+        state.sortCol = col;
+        state.sortDir = "asc";
+      }
+      render();
+    };
+    tr.appendChild(th);
+  });
+}
+
+function filterAndSort() {
+  let rows = DATA.slice();
+  const q = state.search.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(r =>
+      COLUMNS.some(c => String(r[c]).toLowerCase().includes(q))
+    );
+  }
+  if (state.drive) rows = rows.filter(r => r["Drive time"] === state.drive);
+  if (state.permits) rows = rows.filter(r => r["Permits"].trim() === state.permits);
+  if (state.fee === "Free") rows = rows.filter(r => r["Fee"].trim().toLowerCase() === "free");
+  if (state.fee === "Paid") rows = rows.filter(r => r["Fee"].trim().toLowerCase() !== "free");
+
+  const col = state.sortCol;
+  const dir = state.sortDir === "asc" ? 1 : -1;
+  rows.sort((a, b) => {
+    if (col === "Drive time") {
+      return (parseDriveTime(a[col]) - parseDriveTime(b[col])) * dir;
+    }
+    return String(a[col]).localeCompare(String(b[col])) * dir;
+  });
+  return rows;
+}
+
+function render() {
+  renderHeader();
+  syncMobileSort();
+  const rows = filterAndSort();
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  const q = state.search.trim();
+
+  if (rows.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = COLUMNS.length;
+    td.className = "empty";
+    td.textContent = "No matching parks. Try clearing filters.";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+  } else {
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      COLUMNS.forEach(col => {
+        const td = document.createElement("td");
+        td.setAttribute("data-label", col);
+        const val = r[col];
+        if (col === "Park / Area") {
+          td.className = "park-name";
+          td.innerHTML = highlight(val, q);
+        } else if (col === "Drive time") {
+          td.className = "drive-time";
+          td.innerHTML = highlight(val, q);
+        } else if (col === "Permits") {
+          const span = document.createElement("span");
+          span.className = "badge " + permitBadgeClass(val);
+          span.innerHTML = highlight(val.trim() || "—", q);
+          td.appendChild(span);
+        } else if (col === "Fee") {
+          td.className = "fee";
+          const span = document.createElement("span");
+          span.className = "badge " + feeBadgeClass(val);
+          span.innerHTML = highlight(val, q);
+          td.appendChild(span);
+        } else if (col === "Notes") {
+          td.className = "notes";
+          td.innerHTML = highlight(val, q);
+        } else {
+          td.innerHTML = highlight(val, q);
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("stats").textContent =
+    `Showing ${rows.length} of ${DATA.length} camping areas`;
+}
+
+document.getElementById("search").addEventListener("input", e => {
+  state.search = e.target.value;
+  render();
+});
+document.getElementById("filter-drive").addEventListener("change", e => {
+  state.drive = e.target.value;
+  render();
+});
+document.getElementById("filter-permits").addEventListener("change", e => {
+  state.permits = e.target.value;
+  render();
+});
+document.getElementById("filter-fee").addEventListener("change", e => {
+  state.fee = e.target.value;
+  render();
+});
+
+const sortColSel = document.getElementById("mobile-sort-col");
+COLUMNS.forEach(col => {
+  const o = document.createElement("option");
+  o.value = col; o.textContent = "Sort: " + col;
+  sortColSel.appendChild(o);
+});
+sortColSel.value = state.sortCol;
+document.getElementById("mobile-sort-dir").value = state.sortDir;
+
+sortColSel.addEventListener("change", e => {
+  state.sortCol = e.target.value;
+  render();
+});
+document.getElementById("mobile-sort-dir").addEventListener("change", e => {
+  state.sortDir = e.target.value;
+  render();
+});
+
+function syncMobileSort() {
+  sortColSel.value = state.sortCol;
+  document.getElementById("mobile-sort-dir").value = state.sortDir;
+}
+
+populateFilters();
+render();
+</script>
+</body>
+</html>
