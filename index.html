@@ -4,38 +4,83 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BC Camping Areas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #faf8f3;
-    --surface: #ffffff;
-    --border: #e2dfd6;
-    --text: #2a2a28;
-    --muted: #6b6a64;
-    --accent: #3d6b3a;
-    --accent-light: #e8f0e6;
-    --hover: #f4f1e8;
-    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --bg: #f6f2e8;
+    --surface: #fffdf7;
+    --border: #ddd6c4;
+    --text: #1f1e1b;
+    --muted: #756f63;
+    --accent: #2f5b34;
+    --accent-light: #e6ede2;
+    --hover: #efeadd;
+    --rule: #c9c0a8;
+    --serif: "Cormorant Garamond", "Iowan Old Style", "Hoefler Text", Georgia, "Times New Roman", serif;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --shadow: 0 1px 3px rgba(60,50,20,0.05), 0 1px 2px rgba(60,50,20,0.06);
   }
   * { box-sizing: border-box; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: var(--sans);
     background: var(--bg);
     color: var(--text);
     margin: 0;
-    padding: 24px;
-    line-height: 1.5;
+    padding: 32px 24px 48px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   .container { max-width: 1400px; margin: 0 auto; }
+  .masthead {
+    text-align: center;
+    padding: 8px 0 24px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--rule);
+    position: relative;
+  }
+  .masthead::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -1px;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: var(--accent);
+  }
+  .eyebrow {
+    font-family: var(--sans);
+    font-size: 0.7rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
   h1 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    margin: 0 0 4px;
+    font-family: var(--serif);
+    font-size: 3.4rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    line-height: 1.05;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  h1 em {
+    font-style: italic;
     color: var(--accent);
+    font-weight: 500;
   }
   .subtitle {
+    font-family: var(--serif);
+    font-style: italic;
     color: var(--muted);
-    font-size: 0.9rem;
-    margin-bottom: 20px;
+    font-size: 1.15rem;
+    margin: 0;
+    font-weight: 400;
   }
   .controls {
     display: flex;
@@ -109,20 +154,20 @@
     font-size: 0.9rem;
   }
   thead {
-    background: #f5f2e9;
+    background: #efeadd;
     position: sticky;
     top: 0;
     z-index: 5;
   }
   th {
     text-align: left;
-    padding: 12px 14px;
+    padding: 14px 14px;
     font-weight: 600;
-    font-size: 0.82rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.16em;
     color: var(--muted);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--rule);
     cursor: pointer;
     user-select: none;
     white-space: nowrap;
@@ -151,9 +196,13 @@
     vertical-align: top;
   }
   td.park-name {
-    font-weight: 600;
+    font-family: var(--serif);
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1.2;
     color: var(--text);
-    min-width: 180px;
+    min-width: 200px;
+    letter-spacing: 0.005em;
   }
   td.drive-time {
     white-space: nowrap;
@@ -163,6 +212,7 @@
   td.notes {
     color: var(--muted);
     font-size: 0.88rem;
+    line-height: 1.55;
     max-width: 420px;
   }
   td.fee { max-width: 220px; }
@@ -195,9 +245,11 @@
   .mobile-sort { display: none; }
 
   @media (max-width: 720px) {
-    body { padding: 12px; font-size: 15px; }
-    h1 { font-size: 1.4rem; }
-    .subtitle { font-size: 0.85rem; margin-bottom: 16px; }
+    body { padding: 20px 14px 32px; font-size: 15px; }
+    .masthead { padding: 4px 0 18px; margin-bottom: 20px; }
+    .eyebrow { font-size: 0.62rem; letter-spacing: 0.28em; margin-bottom: 6px; }
+    h1 { font-size: 2.1rem; }
+    .subtitle { font-size: 0.98rem; margin-bottom: 0; }
 
     .controls { flex-direction: column; align-items: stretch; gap: 10px; }
     .search-box { min-width: 0; width: 100%; }
@@ -228,11 +280,20 @@
     tbody tr {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 10px;
+      border-radius: 4px;
+      padding: 20px 18px 16px;
+      margin-bottom: 12px;
       box-shadow: var(--shadow);
       transition: none;
+      position: relative;
+    }
+    tbody tr::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent);
+      border-radius: 4px 4px 0 0;
     }
     tbody tr:hover { background: var(--surface); }
 
@@ -245,25 +306,31 @@
       margin: 0;
       border: none;
     }
-    td + td { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+    td + td { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
     td::before {
       content: attr(data-label);
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.14em;
       color: var(--muted);
       font-weight: 600;
-      padding-top: 2px;
+      padding-top: 3px;
     }
 
     td.park-name {
       grid-template-columns: 1fr;
       gap: 0;
       min-width: 0;
-      font-size: 1.05rem;
+      font-family: var(--serif);
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.005em;
+      color: var(--text);
+      padding-bottom: 4px;
     }
     td.park-name::before { display: none; }
-    td.park-name + td { margin-top: 10px; padding-top: 10px; }
+    td.park-name + td { margin-top: 14px; padding-top: 14px; }
 
     td.notes { max-width: none; }
     td.fee { max-width: none; }
@@ -280,8 +347,11 @@
 </head>
 <body>
 <div class="container">
-  <h1>BC Camping Areas</h1>
-  <div class="subtitle">Interactive directory of camping destinations near Vancouver</div>
+  <header class="masthead">
+    <div class="eyebrow">A Field Guide</div>
+    <h1>British Columbia <em>Camping Areas</em></h1>
+    <div class="subtitle">A curated directory of camping destinations near Vancouver</div>
+  </header>
 
   <div class="controls">
     <div class="search-box">
